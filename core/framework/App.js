@@ -10,11 +10,31 @@ import Vungle from '../networks/Vungle';
 
 import Preloader from './Preloader';
 import Game from '../../src/Game';
+import TransitionScene from '../../src/TransitionScene';
+import TimerScene from '../../src/TimerScene';
+import StateManager from '../../src/StateManager';
 
 import Utils from './Utils';
 
+const getConfiguredNetworkName = () => {
+    if (typeof window.App.networkName === 'string' && window.App.networkName.length > 0) {
+        return window.App.networkName;
+    }
+
+    if (typeof window.App.network === 'string' && window.App.network.length > 0) {
+        return window.App.network;
+    }
+
+    return '';
+};
+
 class App extends Phaser.Game {
     constructor() {
+        // Polyfill for Camera.addToRenderList (missing in custom Phaser build, needed by SpinePlugin)
+        if (Phaser.Cameras && Phaser.Cameras.Scene2D && Phaser.Cameras.Scene2D.Camera && !Phaser.Cameras.Scene2D.Camera.prototype.addToRenderList) {
+            Phaser.Cameras.Scene2D.Camera.prototype.addToRenderList = function() {};
+        }
+
         const config = {
             type: Phaser.AUTO,
             parent: 'app',
@@ -24,8 +44,8 @@ class App extends Phaser.Game {
                 height: window.innerHeight * window.devicePixelRatio,
             },
             title: 'Core Version: ' + window.App.CORE_VERSION,
-            backgroundColor: '#1e1e1e',
-            scene: [Preloader, Game]
+            backgroundColor: '#804019',
+            scene: [Preloader, Game, TransitionScene, TimerScene]
         };
 
         if(window.SpinePlugin) {
@@ -35,6 +55,23 @@ class App extends Phaser.Game {
         }
 
         super(config);
+
+        // Fix: SpinePlugin's unbind() disables vertex attributes (inTexId, inTintEffect)
+        // on the GL context. When MultiPipeline re-activates via bind(), it calls
+        // setAttribPointers() without the reset flag, so disabled attributes stay disabled.
+        // Patch setAttribPointers to always re-enable attributes after pipelines boot.
+        this.events.once('ready', () => {
+            if (this.renderer && this.renderer.pipelines && typeof this.renderer.pipelines.get === 'function') {
+                const multiPipeline = this.renderer.pipelines.get('MultiPipeline');
+                if (multiPipeline && multiPipeline.currentShader) {
+                    const shader = multiPipeline.currentShader;
+                    const origSetAttribPointers = shader.setAttribPointers;
+                    shader.setAttribPointers = function(t) {
+                        return origSetAttribPointers.call(this, true);
+                    };
+                }
+            }
+        });
 
         this.create();
         this.addStyle();
@@ -48,9 +85,16 @@ class App extends Phaser.Game {
 
         if(!window.dapi) window.addEventListener('resize', this.resize.bind(this), true);
 
+        const networkName = getConfiguredNetworkName();
+
         this.network = network;
         this.network.game = this;
+        window.App.networkName = networkName;
+        window.App.network = this.network;
         this.size = {resize: this.resize.bind(this)};
+
+        // Initialise the state manager with the level flow injected by the builder
+        window.App.stateManager = new StateManager(window.App.flow || []);
     }
 
     addStyle() {
@@ -117,7 +161,7 @@ class App extends Phaser.Game {
 
             deviceWidth = window.dapi.getScreenSize().width * window.devicePixelRatio;
             deviceHeight = window.dapi.getScreenSize().height * window.devicePixelRatio;
-        } else if (window.App.network === 'Applovin') {
+        } else if (getConfiguredNetworkName() === 'Applovin') {
             width = window.mraid.getScreenSize().width;
             height = window.mraid.getScreenSize().height;
 
@@ -216,21 +260,27 @@ const start = () => {
     new App();
 }
 
-if(window.App.network === 'Applovin') {
+const networkName = getConfiguredNetworkName();
+
+if(networkName === 'Applovin') {
     network = new Applovin(start);
-} else if(window.App.network === 'Facebook') {
+} else if(networkName === 'Facebook') {
     network = new Facebook(start);
-} else if(window.App.network === 'Google') {
+} else if(networkName === 'Moloco') {
+    network = new Moloco(start);
+} else if(networkName === 'Google') {
     network = new Google(start);
-} else if(window.App.network === 'IronSource') {
+} else if(networkName === 'IronSource') {
     network = new IronSource(start);
-} else if(window.App.network === 'Liftoff') {
+} else if(networkName === 'Liftoff') {
     network = new Liftoff(start);
-} else if(window.App.network === 'TikTok') {
+} else if(networkName === 'TikTok') {
     network = new TikTok(start);
-} else if(window.App.network === 'UnityAds') {
+} else if(networkName === 'UnityAds') {
     network = new UnityAds(start);
-} else if(window.App.network === 'Vungle') {
+} else if(networkName === 'Mintegral') {
+    network = new Mintegral(start);
+} else if(networkName === 'Vungle') {
     network = new Vungle(start);
 } else {
     network = new Network(start);

@@ -18,7 +18,7 @@ export default class Button extends Phaser.GameObjects.Container{
             this.add(this.filterTexture);
         }
         if(text){
-            this.text = this.scene.add.text(0, 0, text, {fontFamily: 'Varela', fontSize: 48, color: '#ffffff'}).setDepth(9).setOrigin(0.5, 0.5);
+            this.text = this.scene.add.text(0, 0, text, {fontFamily: 'LilitaOne-Regular, Arial', fontSize: 48, color: '#ffffff'}).setDepth(9).setOrigin(0.5, 0.5);
             this.add(this.text);
         }
         this.add([this.button]);
@@ -45,7 +45,7 @@ export default class Button extends Phaser.GameObjects.Container{
 
     onClick(){
         if(!this.enabled) return;
-        Utils.addAudio(this.scene, 'click', 0.5);
+        Utils.addAudio(this.scene, 'click', 1.5);
         if(this.loopedAnimation) this.loopedAnimation.pause();
         
         this.disableClick();

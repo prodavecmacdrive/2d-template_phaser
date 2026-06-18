@@ -1,0 +1,120 @@
+{
+  "container": {
+    "portraitAlign": "Top",
+    "portraitCx": 0,
+    "portraitCy": 0,
+    "landscapeAlign": "Left",
+    "landscapeCx": 0,
+    "landscapeCy": 0,
+    "maxHeightP": 1,
+    "maxWidthL": 1,
+    "depth": 1
+  },
+  "background": {
+    "pOriginX": 0.5,
+    "pOriginY": 0,
+    "lOriginX": 0,
+    "lOriginY": 0.5,
+    "pScaleX": 0.32,
+    "pScaleY": 0.32,
+    "lScaleX": 0.33,
+    "lScaleY": 0.33,
+    "depth": 3
+  },
+  "staticBg": {
+    "image": "stress_scale_bg",
+    "px": -1,
+    "py": 62,
+    "lx": 110,
+    "ly": -60,
+    "pScaleX": 0.41,
+    "pScaleY": 0.41,
+    "lScaleX": 0.36,
+    "lScaleY": 0.36,
+    "depth": -26
+  },
+  "dial": {
+    "px": -1,
+    "py": 112,
+    "lx": 110,
+    "ly": -16,
+    "pScaleX": 0.41,
+    "pScaleY": 0.41,
+    "lScaleX": 0.36,
+    "lScaleY": 0.36,
+    "depth": -5
+  },
+  "rotation": {
+    "step": 15,
+    "durationMs": 250,
+    "ease": "Power2.Out"
+  },
+  "displayType": "spineCharacter",
+  "spineCharacter": {
+    "enabled": true,
+    "spineKey": "Einstein",
+    "skin": "default",
+    "idleAnimation": "Idle",
+    "correctAnimation": "Smile",
+    "incorrectAnimation": "Sad",
+    "scale": 1,
+    "depth": 4,
+    "px": 76,
+    "py": 40,
+    "lx": 186,
+    "ly": -70,
+    "pScaleX": 0.085,
+    "pScaleY": 0.085,
+    "lScaleX": 0.085,
+    "lScaleY": 0.085,
+    "pAlign": "Center",
+    "lAlign": "Center"
+  },
+  "emotion": {
+    "defaultImage": "emo_0",
+    "minRotation": 0,
+    "maxRotation": 170,
+    "px": 0,
+    "py": 110,
+    "lx": 110,
+    "ly": -10,
+    "pScaleX": 0.45,
+    "pScaleY": 0.45,
+    "lScaleX": 0.45,
+    "lScaleY": 0.45,
+    "stressedText": {
+      "text": "Stressed",
+      "px": -82,
+      "py": 124,
+      "lx": 45,
+      "ly": 0,
+      "fontSize": 10,
+      "color": "#ffffff",
+      "outline": 2,
+      "outlineColor": "#000000"
+    },
+    "happyText": {
+      "text": "Happy",
+      "px": 86,
+      "py": 124,
+      "lx": 186,
+      "ly": 0,
+      "fontSize": 11,
+      "color": "#ffffff",
+      "outline": 2,
+      "outlineColor": "#000000"
+    },
+    "transitionMs": 86,
+    "holdOnDecreaseMs": 1100,
+    "textScaleCoefficient": 10,
+    "levels": [
+      { "image": "emo_1", "minRotation": 0, "maxRotation": 24 },
+      { "image": "emo_2", "minRotation": 25, "maxRotation": 49 },
+      { "image": "emo_3", "minRotation": 50, "maxRotation": 74 },
+      { "image": "emo_4", "minRotation": 75, "maxRotation": 99 },
+      { "image": "emo_5", "minRotation": 100, "maxRotation": 124 },
+      { "image": "emo_6", "minRotation": 125, "maxRotation": 149 },
+      { "image": "emo_7", "minRotation": 150, "maxRotation": 170 }
+    ]
+  }
+}

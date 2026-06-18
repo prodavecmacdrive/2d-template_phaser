@@ -4,12 +4,11 @@ export default class Preloader extends Phaser.Scene {
     }
 
     preload() {
-        for (var key in window.App.resources.spine) {
-            this.textures.addBase64(key + '.png', window.App.resources.spine[key].png);
-        }
     }
   
     create() {
+        if (typeof window.trackAxonEvent === 'function') window.trackAxonEvent('LOADING');
+
         this.loaded = 0;
         this.audioLoaded = false;
 
@@ -39,16 +38,40 @@ export default class Preloader extends Phaser.Scene {
             let codec = window.App.resources.audio.m4a;
             if(!this.game.device.audio.m4a) codec = window.App.resources.audio.ogg;
             let audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            audioCtx.decodeAudioData(this.base64ToArrayBuffer(codec), (buffer) => {
-                if(this.audioLoaded) return;
+            try {
+                const audioBufferPromise = audioCtx.decodeAudioData(this.base64ToArrayBuffer(codec));
+                audioBufferPromise.then((buffer) => {
+                    if (this.audioLoaded) return;
 
-                this.cache.audio.add('sfx', buffer);
-                this.loaded++;
+                    this.cache.audio.add('sfx', buffer);
+                    this.loaded++;
 
-                this.audioLoaded = true;
-                
-                this.startGame();
-            });
+                    this.audioLoaded = true;
+
+                    if (window.App.resources.audio.json && !window.App.isMusicPlaying) {
+                        let sound = this.game.sound.addAudioSprite('sfx');
+                        sound.play('music', { loop: true, volume: 0.35 });
+                        window.App.isMusicPlaying = true;
+                        window.App.bgMusic = sound;
+                    }
+
+                    this.startGame();
+                }).catch((err) => {
+                    console.warn('[Preloader] audio decode failed', err);
+                    if (!this.audioLoaded) {
+                        this.loaded++;
+                        this.audioLoaded = true;
+                        this.startGame();
+                    }
+                });
+            } catch (err) {
+                console.warn('[Preloader] audio decode exception', err);
+                if (!this.audioLoaded) {
+                    this.loaded++;
+                    this.audioLoaded = true;
+                    this.startGame();
+                }
+            }
 
             setTimeout(() => {
                 if(this.audioLoaded) return;
@@ -60,29 +83,101 @@ export default class Preloader extends Phaser.Scene {
             }, 1000)
         }
 
-        this.time.addEvent({delay: 250, callback: () => {
-            for (var key in App.resources.spine) {
-                let image = new Image();
-                image.src = window.App.resources.spine[key].png;
-                image.onload = () => {
-                    //console.log(this);
-                    //console.log(this.spine.plugin.webgl.GLTexture( this.game.context, image, false ));
-                }
-
-                this.cache.custom.spine.add(key, {preMultipliedAlpha: true, data: window.App.resources.spine[key].atlas} );
-                //console.log(this.game.context, window.App.resources.spine[key].png);
-                //console.log(this.spine.plugin.webgl.GLTexture( this.game.context, window.App.resources.spine[key].png ));
-                this.cache.custom.spineTextures.add(key, this.spine.getAtlas(key));
-                //console.log(this.spine.spineTextures.get(key));
-                this.cache.json.add(key, window.App.resources.spine[key].json);
-                
-                this.loaded++;
-            }
-
-            this.startGame();
-        }, callbackScope: this});
+        for (var key in App.resources.spine) {
+            this._loadInlineSpine(key, App.resources.spine[key]);
+        }
 
         this.startGame();
+    }
+
+    _loadInlineSpine(key, spineData) {
+        if (!spineData || !spineData.png || !spineData.atlas || !spineData.json) {
+            this.loaded++;
+            this.startGame();
+            return;
+        }
+
+        const pageNames = this._extractSpinePageNames(spineData.atlas, `${key}.png`);
+        let remainingPages = pageNames.length;
+
+        const finalize = () => {
+            if (remainingPages > 0) {
+                return;
+            }
+
+            const spineCache = this.cache.custom?.spine || this.cache.addCustom('spine');
+            if (!spineCache.has(key)) {
+                spineCache.add(key, {
+                    preMultipliedAlpha: false,
+                    data: spineData.atlas,
+                    prefix: ''
+                });
+            }
+
+            if (!this.cache.json.has(key)) {
+                this.cache.json.add(key, JSON.parse(spineData.json));
+            }
+
+            this.loaded++;
+            this.startGame();
+        };
+
+        if (remainingPages === 0) {
+            finalize();
+            return;
+        }
+
+        for (const pageName of pageNames) {
+            if (this.textures.exists(pageName)) {
+                remainingPages--;
+                finalize();
+                continue;
+            }
+
+            this._loadBase64Image(
+                spineData.png,
+                (image) => {
+                    if (!this.textures.exists(pageName)) {
+                        this.textures.addImage(pageName, image);
+                    }
+
+                    remainingPages--;
+                    finalize();
+                },
+                () => {
+                    console.warn(`[Preloader] spine texture failed for ${key}:${pageName}`);
+                    remainingPages--;
+                    finalize();
+                }
+            );
+        }
+    }
+
+    _extractSpinePageNames(atlasText, fallbackPageName) {
+        const lines = atlasText.split(/\r?\n/);
+        const pageNames = [];
+
+        for (let index = 0; index < lines.length - 1; index++) {
+            const current = lines[index].trim();
+            const next = lines[index + 1].trim();
+
+            if (current && next.startsWith('size:')) {
+                pageNames.push(current);
+            }
+        }
+
+        if (pageNames.length === 0 && fallbackPageName) {
+            pageNames.push(fallbackPageName);
+        }
+
+        return [...new Set(pageNames)];
+    }
+
+    _loadBase64Image(base64, onLoad, onError) {
+        const image = new Image();
+        image.onload = () => onLoad(image);
+        image.onerror = onError;
+        image.src = base64;
     }
 
     base64ToArrayBuffer(base64) {
@@ -102,11 +197,36 @@ export default class Preloader extends Phaser.Scene {
         
         this.loadTotal = -1;
 
+        if (typeof window.trackAxonEvent === 'function') window.trackAxonEvent('LOADED');
+
         this.time.addEvent({delay: 250, callback: () => {
             document.getElementById('loader').style.display = 'none';
             document.getElementById('app').style.display = 'block';
             
-            this.scene.start('Game');
+            if (typeof window.App.isDev === 'undefined') {
+                window.App.isDev = window.location && (
+                    window.location.hostname === 'localhost' ||
+                    window.location.hostname === '127.0.0.1' ||
+                    window.location.port === '3080'
+                );
+            }
+
+            const autoShowMs = 0;
+            console.log('[Preloader] autoShowOnLaunchMs test', {
+                isDev: window.App.isDev,
+                autoShowOnLaunchMs: autoShowMs,
+                willShowTransition: window.App.isDev && autoShowMs > 0
+            });
+
+            if (window.App.isDev && autoShowMs > 0) {
+                this.time.delayedCall(autoShowMs, () => {
+                    this.scene.start('TransitionScene');
+                });
+            } else if (window.App.levelSelect) {
+                this.scene.start('TransitionScene');
+            } else {
+                this.scene.start('Game', { sceneId: window.App.stateManager.getNextScene() });
+            }
         }, callbackScope: this});
     }
 }

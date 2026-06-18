@@ -1,0 +1,65 @@
+{
+  "_comment": "Settings for the transition screen shown between gameplay levels.",
+
+  "autoShowOnLaunchMs": 0,
+
+  "devLevelButtons": {
+    "scene-1": true,
+    "scene-2": true,
+    "scene-3": false
+  },
+
+  "background": {
+    "color": "#f00b80",
+    "alpha": 1
+  },
+
+  "sceneButtonLabels": {
+    "_comment": "Text displayed on each level-select button. Add one entry per scene id in the flow.",
+    "scene-1": "Scene 1",
+    "scene-2": "Scene 2",
+    "scene-3": "Scene 3"
+  },
+
+  "overlay": {
+    "_comment": "Full-screen overlay background. Use a custom color and alpha to edit the landing-page backdrop.",
+    "color": "#f00b80",
+    "alpha": 0.99,
+    "depth": 50
+  },
+
+  "title": {
+    "_comment": "Landing page title text should wrap at maxWidth so it stays on screen instead of extending beyond the viewport.",
+    "text": "Choose your\nnext level",
+    "y": -260,
+    "fontFamily": "Arial Black, Arial",
+    "fontSize": "52px",
+    "fontStyle": "bold",
+    "color": "#ffffff",
+    "stroke": "#ffffff",
+    "strokeThickness": 0,
+    "align": "center",
+    "maxWidth": 760
+  },
+
+  "buttons": {
+    "y": 60,
+    "spacing": 210,
+    "scale": 0.42,
+    "hoverScale": 1.08,
+    "tweenDurationMs": 120,
+    "tweenEase": "Power2",
+    "labelOffsetY": 120,
+    "labelFontSize": "24px",
+    "labelColor": "#000000",
+    "labelStroke": "#ffffff",
+    "labelStrokeThickness": 0,
+    "introDurationMs": 520,
+    "introStaggerMs": 110,
+    "fadeOutDurationMs": 380,
+    "clickScaleDown": 0.88,
+    "clickScaleDurationMs": 90
+  },
+
+  "uiDepth": 51
+}

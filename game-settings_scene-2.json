@@ -1,0 +1,12 @@
+{
+  "_comment": "Scene-2 overrides. Merges on top of game-settings.json at runtime.",
+
+  "game": {
+    "buttonCaption": "End Scene 2"
+  },
+
+  "background": {
+    "mode": "color",
+    "color": "#33cc44"
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "_comment": "Base game settings. Scene-specific overrides live in game-settings_scene-N.json. All keys here can be overridden per scene.",
+
+  "game": {
+    "_comment": "buttonCaption: text displayed on the gameplay button. Override per scene in game-settings_scene-N.json.",
+    "buttonCaption": "Play!"
+  },
+
+  "background": {
+    "_comment": "mode: 'color' fills the background with a solid color. Use 'image' and set pImage/lImage to texture keys for a background image.",
+    "mode": "color",
+    "color": "#4433cc",
+    "pImage": "bg_p",
+    "lImage": "bg_l",
+    "pScaleX": 1.0,
+    "pScaleY": 1.0,
+    "lScaleX": 1.0,
+    "lScaleY": 1.0
+  },
+
+  "layout": {
+    "ctaButton": {
+      "_comment": "Portrait/landscape position and scale of the gameplay button in container-local coordinates.",
+      "portraitX":  0, "portraitY": 0,
+      "landscapeX": 0, "landscapeY": 0,
+      "portraitScale": 1,
+      "landscapeScale": 1
+    }
+  }
+}

@@ -1,285 +1,297 @@
-# Сборка игры
-```
-npm i // установка зависимостей
-npm run dev // сборка для разработки игры
-npm run prod // билд игры под разные рекламные платформы
-```
-# История изменения кора
-## 0.0.5
-- Добавлена сеть Liftoff
-- Добавлена сеть TikTok
-- Добавлена подержка спайн анимаций(пока с багом текстур)
-- Пофикшен баг загрузки ассетов(когда к примеру есть всего один шрифт и он используется только в одной версии то билды не будут собиратся)
-- Добавлен debug.js
-- Пофикшен баг когда маска могла быть только setAlign('Center')
-- Добавлены утилитные функции generateID, destroy, animText, changeProperty
-- Добавлен мют звуков до первого клика
+# Playable Ad Template
 
-## 0.0.4
-- Добавлена поддержка обеих ориентаций в одном файле
-- Добавлена автоматическая сборка разных версий плеебла
-- Фикс бага когда после изменения файла не с первого раза загружается игра нужно было перезагружать страницу
-- Обновлена кастомная версия фейзера(добавлена рендер текстура и вебджл)
-- Фикс бага когда при вводе команды npm run prod не чистилась папка dist
-- Обновлен тег adwords
-- Фикс сборки Vungle теперь готовый плеебл будет называться ad.html и лежать в папке Vungle
-- в класс ParentScene добавлен метод sort
+A reusable Phaser 3 template for multi-scene playable ads.  
+The current scene contains a single labelled button. Clicking it ends the scene and advances the flow: either showing the **FinalWindow** (last scene) or **TransitionScene** (more scenes remain).  
+Replace `src/Game.js`'s `_initScene()` with real gameplay for each new project.
 
-## 0.0.3
-- Добавлена геометрическая и битмап маска
-- Добавлена функция по правильному определению координат при клике
-- Добавлена ParentScene с максимальными значениями размера игры
-- Фикс не остановки музыки при сворачивании приложения
-- Фикс бага когда иногда не загружаются текстуры
-- Новый путь к Game.js
-- Добавлен лоадер перед игрой
-- Добавлен тег title который автоматически будет брать название из конфига
-- Добавлен в .gitignor папка .idea
-- Небольшой рефаторинг Preloader.js
-- Добавил в readme.md шпаргалку по твинам, туториал по гиту, скил матрицу из coda.io и список для сверки перед отправкой на код ревью
+---
 
-## 0.0.2
-- Кастомная версия кора
-- Добавлены рекламные сети Applovin, Google, IronSource, UnityAds, Vungle
-- Автоматическое сжатие звуков
-- Мелкие фиксы и апдейты
-
-## 0.0.1
-- Добавлены базовые возможности по билду игры
-
-# Сборка ассетов
-- Все ассеты игры должны быть в папке assets/ из этой папки все содержимое будет переведено в base64 при сборке
-- Из за ограничений по весу в 2mb мы должны очень сильно следить за ассетами, арт нужно загружать в игру чтобы он не скейлился кодом в меньшую сторону, изображение у которых нету прозрачности должны быть в jpg если только они не в папке sheets а также весь арт будет автоматически сильно сжат
-- assets/audio: нужно загружать звуки в формате mp3, они автоматически переделаются в mp4 и oqq после чего переведутся в base64, каждый mp3 файл станет больше весить раза в 2 из за этих манипуляций
-- assets/fonts/: шрифт должен быть в формате ttf
-- assets/sheets/: здесь должны быть маленькие изображения, все файлы из этой папки будут собраны в один большой атлас с максимальным размером 2048х2048, если будет больше то атлас не соберется и будут предупреждения в консоли
-- assets/textures/: тут будут все большие файлы + те которые не поместились в атлас
-- temp/: когда ассеты будут собираться автоматически сюда будут попадать копии арта который будет переведен в base64, это нужно чтобы видеть какой атлас собрался, сколько весит + насколько сжались остальные текстуры
-- Для сборки звука нужно установить программу https://ffmpeg.org/ после установки нужно ввести команду ffmpeg для теста
-
-# Код
-- В папке core ничего менять нельзя если был найден баг то я в ношу этот фикс в основной репозиторий и оттуда уже берется новый кор
-- core/builder: код сборки игры
-- core/framework: общий код для всех игр, скейл, загрузка и тд.
-- core/libs: разные библиотеки, версии фейзера, плагины
-- core/networks: api разных рекламных сетей
-- core/template: html шаблоны
-- src/: тут код игры
-- config.js: настройки игры
-- dist/: скомпилированные файлы для рекламных сетей
-- весь код должен быть в ветке dev после релиза игры код из ветки dev переносится в main, если нужно обновить то создается отдельно ветка от main с названием на подобии hotfix/fix-pointer или же feature/added-pointer
-
-# Особенности
-- Вместо обычных координат x и y используем cx и cy или же setCustomPosition
-- Для разных ориентаций экрана мы можем использовать разные свойства объекта
-- В config.js мы можем добавлять разные версии одного плеебла
-- Мы можем выбирать откуда начинаются координаты для каждого объекта, к примеру мы хотим разместить изображение в верхнем правом углу мы пишем this.add.image(0, 0, 'atlas', 'logo').setAlign('Top Rigth') после этого координаты 0, 0 будут в верхнем правом углу, по дефолту у всех изображений координаты 0,0 будут в центральной точке (в примере будет более понятно)
-- Текущую версию кора можно посмотреть в консоли рядом с версией phaser
-- При тестировании на площадках выключать adblock
-
-# Валидаторы
-- Applovin: https://p.applov.in/playablePreview?create=1 (на сайте есть ссылка на скачивание приложения для теста)
-- Facebook: https://developers.facebook.com/tools/playable-preview/
-- Google Ads: https://h5validator.appspot.com/adwords/asset (нужно нажать на Select for App Campaigns, архив должен быть до 1мб)
-- Iron Source: https://demos.ironsrc.com/test-tool/?adUnitLoader=dapi&mode=testing (сверху нужно выбрать dapi, после успешного теста внизу будет ссылка на скачивание приложения на телефон, нужно еще перепроверить на телефоне)
-- Liftoff: нету валидатора, api такое же как и в applovin
-- Tiktok: https://bytedance.feishu.cn/docs/doccnmdeT1KStyS0QdVExnVAy8v
-- UnityAds: у них есть свое приложение для тестирования но оно ужасно, по факту если в applovin все ок то и здесь проблем не будет
-- Vungle: нету валидатора, но у них простое api, также как и с UnityAds если в applovin все ок то и здесь проблем не будет
-
-# Туториал по гиту
-- В ветке main должен быть только пустой readme который создается автоматически
-- От ветки main делаем ветку dev в которой будет вся разработка
-- Если обновился кор то пока он не будет переведен в submodule, просто перекидываем новую папку кор себе в проект
-- Используйте правильный стиль в гите https://tproger.ru/translations/git-style-guide/ 
-- Разрабатывайте проект не локально не должно быть сначала initial commit а потом финальная версия
-
-# Список для проверки перед отправкой на код ревью
-- Правильность названия ассетов, все ассеты включая звуки и шрифты должны начинаться с маленькой буквы и использовать _ как разделитель
-- Правильность названия переменых и функций, используем camelCase
-- В проекте не должно быть window.innerWidth, window.innerHeight, setInterval, setTimeout
-- В финальной версии игры не должно быть console.log
-- Использовать стиль кода как в статье https://learn.javascript.ru/coding-style
-- В консоле не должно быть ошибок или предупреждений
-- Не должно быть больших анонимных функций
-- Не должно быть лишних ассетов
-- Размер игры меньше 2мб (В случае adwords zip архив должен быть до 1мб)
-- В конце игры должен быть вызов this.game.network.complete()
-- Старайтесь разбивать код на классы, чтоб в Game.js было максимум пару сотен строк
-
-# Скил матрица по развитию
-- Примеры на фейзере https://phaser.io/examples
-- Новости связаные с фейзером https://phaser.io/news
-- Блог с примерами разных механик игр https://www.emanueleferonato.com
-- Форум по html5 играм  https://www.html5gamedevs.com/
-- Коротко об plyable ads https://vc.ru/marketing/93969-chto-takoe-playable-ads-i-kak-rabotaet-tehnologiya
-- Блог рекламной сети https://www.is.com/community/blog/
-- Game Dev паттерны программирования https://live13.livejournal.com/462582.html
-- Правильный стиль кода  в js https://learn.javascript.ru/coding-style
-- Список разных вещей связанных с фейзером https://github.com/Raiper34/awesome-phaser
-- Список html5 игр с исходниками https://github.com/leereilly/games
-- Шпаргалка по типам твинов https://easings.net/ru
-
-# Билд кастомной версии фейзера
-- Скачать репозиторий https://github.com/photonstorm/phaser3-custom-build
-- В pakage.json поменять версию на последнюю ```"phaser": "^3.55.2"```
-- Установить зависимости ```npm i```
-- Заменить файл webpack.config-full.js и phaser-full.js
-- Собрать билд с помощью команды ```npm run buildfull```
-- Это работает для  версии 3.55.2 для новых версий возможны небольшие изменения
-## webpack.config-full.js
+## Project structure
 
 ```
-'use strict';
-
-const webpack = require('webpack');
-const UglifyJSPlugin = require('uglifyjs-webpack-plugin');
-const { CleanWebpackPlugin } = require('clean-webpack-plugin');
-const path = require('path');
-
-module.exports = {
-
-   //   mode: 'development',
-   mode: 'production',
-
-   entry: {
-       'phaser-full.min': './phaser-full.js'
-   },
-
-   resolve: {
-       alias: {
-           'eventemitter3': path.resolve(__dirname, './node_modules/eventemitter3')
-       },
-       modules: [ 'node_modules/phaser/src' ]
-   },
-
-   output: {
-       path: `${__dirname}/dist/`,
-       filename: '[name].js',
-       library: 'Phaser',
-       libraryTarget: 'umd',
-       sourceMapFilename: '[file].map',
-       devtoolModuleFilenameTemplate: 'webpack:///[resource-path]',
-       devtoolFallbackModuleFilenameTemplate: 'webpack:///[resource-path]?[hash]',
-       umdNamedDefine: true
-   },
-
-   performance: { hints: false },
-
-   optimization: {
-       minimizer: [
-           new UglifyJSPlugin({
-               include: /\.min\.js$/,
-               parallel: true,
-               sourceMap: false,
-               uglifyOptions: {
-                   compress: true,
-                   ie8: false,
-                   ecma: 5,
-                   output: {comments: false},
-                   warnings: false
-               },
-               warningsFilter: () => false
-           })
-       ]
-   },
-
-   plugins: [
-       new webpack.DefinePlugin({
-           "typeof CANVAS_RENDERER": JSON.stringify(true),
-           "typeof WEBGL_RENDERER": JSON.stringify(true),
-           "typeof EXPERIMENTAL": JSON.stringify(false),
-           "typeof PLUGIN_CAMERA3D": JSON.stringify(false),
-           "typeof PLUGIN_FBINSTANT": JSON.stringify(false)
-       }),
-
-       new CleanWebpackPlugin()
-   ],
-
-   devtool: 'source-map'
-
-};
+config.js                        Build variants and asset manifest
+game-settings.json               Base game settings (all scenes share these)
+game-settings_scene-N.json       Per-scene overrides (merged on top at runtime)
+game-timer.json                  Optional countdown-timer settings
+final-window-settings.json       End-screen overlay layout
+transition-screen-settings.json  Level-select screen layout
+src/
+  Game.js            Gameplay scene  ← add your game here
+  TransitionScene.js Level-select screen between scenes
+  Background.js      Responsive background (color or image)
+  Button.js          Reusable animated CTA button component
+  Helper.js          Animated finger-hint for player guidance
+  FinalWindow.js     End-screen overlay (win image + CTA button)
+  StateManager.js    Tracks scene-completion and level flow
+  TimerScene.js      Persistent countdown timer scene
+  Timer.js           Stopwatch visual component
+assets/              Drop textures, audio, fonts, spine here
+core/                Framework — do not edit
 ```
-## phaser-full.js
-```
-require('polyfills');
 
-var CONST = require('const');
-var Extend = require('utils/object/Extend');
+---
 
-var Phaser = {
-    Cache: require('cache'),
-    Cameras: {
-        Scene2D: require('cameras/2d')
-    },
-    Events: require('events/index'),
-    Game: require('core/Game'),
-    GameObjects: {
-        DisplayList: require('gameobjects/DisplayList'),
-        GameObjectCreator: require('gameobjects/GameObjectCreator'),
-        GameObjectFactory: require('gameobjects/GameObjectFactory'),
-        UpdateList: require('gameobjects/UpdateList'),
-        Components: require('gameobjects/components'),
-        BuildGameObject: require('gameobjects/BuildGameObject'),
-        BuildGameObjectAnimation: require('gameobjects/BuildGameObjectAnimation'),
-        GameObject: require('gameobjects/GameObject'),
-        Graphics: require('gameobjects/graphics/Graphics.js'),
-        Image: require('gameobjects/image/Image'),
-        Sprite: require('gameobjects/sprite/Sprite'),
-        Text: require('gameobjects/text/Text'),
-        Container: require('gameobjects/container/Container'),
-        RenderTexture: require('gameobjects/rendertexture/RenderTexture.js'),
-        TileSprite: require('gameobjects/tilesprite/TileSprite'),
-        DOMElement: require('gameobjects/domelement/DOMElement'),
-        Particles: {
-            Particle: require('gameobjects/particles/Particle'),
-            ParticleEmitter: require('gameobjects/particles/ParticleEmitter'),
-            ParticleEmitterManager: require('gameobjects/particles/ParticleEmitterManager'),
-            GravityWell: require('gameobjects/particles/GravityWell'),
-        },
-        Factories: {
-            Graphics: require('gameobjects/graphics/GraphicsFactory'),
-            RenderTexture: require('gameobjects/rendertexture/RenderTextureFactory.js'),
-            Image: require('gameobjects/image/ImageFactory'),
-            Sprite: require('gameobjects/sprite/SpriteFactory'),
-            Text: require('gameobjects/text/TextFactory'),
-            Container: require('gameobjects/container/ContainerFactory'),
-            TileSprite: require('gameobjects/tilesprite/TileSpriteFactory'),
-            ParticleEmitterManager: require('gameobjects/particles/ParticleManagerFactory'),
-            DOMElement: require('gameobjects/domelement/DOMElementFactory')
-        },
-        Creators: {
-            Graphics: require('gameobjects/graphics/GraphicsCreator'),
-            RenderTexture: require('gameobjects/rendertexture/RenderTextureCreator.js'),
-            Image: require('gameobjects/image/ImageCreator'),
-            Sprite: require('gameobjects/sprite/SpriteCreator'),
-            Text: require('gameobjects/text/TextCreator'),
-            Container: require('gameobjects/container/ContainerCreator'),
-            TileSprite: require('gameobjects/tilesprite/TileSpriteCreator'),
-            ParticleEmitterManager: require('gameobjects/particles/ParticleManagerCreator')
-        }
-    },
-    Input: require('input'),
-    Loader: require('loader'),
-    Renderer: {
-        Canvas: require('renderer/canvas'),
-    },
-    Scale: require('scale'),
-    ScaleModes: require('renderer/ScaleModes'),
-    Scene: require('scene/Scene'),
-    Scenes: require('scene'),
-    Time: require('time'),
-    Tweens: require('tweens')
-};
+## game-settings.json
 
-if (typeof FEATURE_SOUND)
+Base settings shared by all scenes. Scene-specific values are provided in `game-settings_scene-N.json` and **deep-merged** on top at runtime (`Game._deepMerge`). Arrays in the override file replace arrays wholesale; nested objects are recursively merged.
+
+### `game`
+
+| Key | Type | Description |
+|-----|------|-------------|
+| `buttonCaption` | string | Text on the gameplay button. Override per scene. |
+
+### `background`
+
+| Key | Type | Description |
+|-----|------|-------------|
+| `mode` | `"color"` \| `"image"` | `"color"` fills with `color`. `"image"` uses `pImage`/`lImage` textures. |
+| `color` | hex string | Background fill colour when `mode` is `"color"`. |
+| `pImage` / `lImage` | texture key | Portrait / landscape background texture keys (used when `mode` is `"image"`). |
+| `pScaleX/Y` / `lScaleX/Y` | number | Scale multipliers for the background image. |
+
+### `layout.ctaButton`
+
+Position of the gameplay button in container-local space.
+
+| Key | Description |
+|-----|-------------|
+| `portraitX` / `portraitY` | Button centre offset when in portrait orientation. |
+| `landscapeX` / `landscapeY` | Button centre offset when in landscape orientation. |
+
+### Adding game-specific settings
+
+Add any custom keys directly to `game-settings.json` (or to a scene override file).  
+Read them in `Game._initScene()` via `this.SETTINGS.yourKey`.
+
+---
+
+## Per-scene overrides — game-settings_scene-N.json
+
+Each `game-settings_scene-N.json` overrides only the keys it declares; all other values fall back to `game-settings.json`.
+
+**Example — scene-1 with a red background and custom caption:**
+```json
 {
-    Phaser.Sound = require('sound');
+  "game": { "buttonCaption": "Sort Cold & Hot" },
+  "background": { "mode": "color", "color": "#cc4433" }
 }
-
-Phaser = Extend(false, Phaser, CONST);
-
-module.exports = Phaser;
-
-global.Phaser = Phaser;
 ```
+
+The builder injects all scene files into `window.App.scenesData` at build time.  
+`Game.init()` picks the right one by matching `this._sceneId`.
+
+---
+
+## game-timer.json
+
+Controls the optional countdown stopwatch. Set `gameFinalTime` to `0` to disable the timer entirely.
+
+| Key | Type | Description |
+|-----|------|-------------|
+| `gameFinalTime` | number (centiseconds) | `0` = disabled. `3000` = 30 seconds. |
+| `container.portraitX/Y` | number | Timer container position — portrait. |
+| `container.landscapeX/Y` | number | Timer container position — landscape. |
+| `container.pAlign` / `lAlign` | string | Alignment anchor, e.g. `"Top Right"`. |
+| `timerScale.portrait` / `landscape` | number | Extra scale multiplier per orientation. |
+| `text.*` | object | Font, colour, and size of the countdown text. |
+| `appearance.*` | object | Intro/bounce animation timing. |
+
+When `gameFinalTime > 0` the timer scene is launched automatically. On timeout `FinalWindow.show()` is called regardless of game state.
+
+---
+
+## final-window-settings.json
+
+Layout of the end-screen overlay shown after the last scene completes (or on timer timeout).
+
+### `autoShowOnLaunchMs`
+If `> 0`, the FinalWindow opens automatically after this many milliseconds—useful for testing.
+
+### `overlay`
+Full-screen semi-transparent backdrop behind the win image and CTA button.
+
+| Key | Description |
+|-----|-------------|
+| `fillAlpha` | Opacity of the dark overlay (`0`–`1`). |
+| `blurRadius` | CSS blur radius applied to the captured background snapshot. |
+
+### `imgFin` — win image
+Aligned to the **Top** edge. `portraitY` / `landscapeY` are offsets downward from the top.
+
+| Key | Description |
+|-----|-------------|
+| `portraitX/Y` / `landscapeX/Y` | Centre position. |
+| `pScale` / `lScale` | Scale per orientation. |
+| `intro.delayMs` / `durationMs` / `ease` | Bounce-in animation. |
+| `pulse.*` | Continuous scale-pulse loop after the intro. |
+
+Add a texture keyed `imgFin` to the asset manifest to display it.
+
+### `btnFin` — CTA button
+Aligned to the **Bottom** edge. `portraitY` / `landscapeY` are negative (upward offset from bottom).
+
+| Key | Description |
+|-----|-------------|
+| `portraitX/Y` / `landscapeX/Y` | Centre position. |
+| `pScale` / `lScale` | Scale per orientation. |
+| `intro.*` | Zoom-in animation. |
+| `twitch.*` | Periodic grow-shrink loop that attracts taps. |
+
+Add a texture keyed `btnFin` to the asset manifest. The button calls `window.App.network.ctaClick()` on tap.
+
+---
+
+## transition-screen-settings.json
+
+Layout of the level-select screen (`TransitionScene`) shown between scenes.
+
+### `sceneButtonLabels`
+Maps each scene id to the text displayed on its button.
+```json
+"sceneButtonLabels": {
+  "scene-1": "Scene 1",
+  "scene-2": "Scene 2",
+  "scene-3": "Scene 3"
+}
+```
+
+### `title`
+Text, font, colour, and vertical position (`y`) of the "Choose your next level" header.
+
+### `buttons`
+| Key | Description |
+|-----|-------------|
+| `y` | Vertical centre of the button row. |
+| `spacing` | Horizontal gap between buttons. |
+| `scale` | Final resting scale of each button. |
+| `hoverScale` | Scale multiplier on pointer-over. |
+| `introDurationMs` / `introStaggerMs` | Bounce-in timing and per-button stagger. |
+| `clickScaleDown` / `clickScaleDurationMs` | Click-press animation. |
+| `fadeOutDurationMs` | Fade before starting the selected game scene. |
+| `labelFontFamily` / `labelFontSize` / `labelColor` | Button text style. |
+
+### `devLevelButtons`
+Boolean map of scene ids visible during local dev preview.
+
+---
+
+## Helper.js
+
+Animated finger hint that guides the player. Three independent modes:
+
+### `startGameplay(getActiveCards, dropZones, [holdCells])`
+Shows a drag animation from an active card to its matching drop zone.  
+- `getActiveCards` — callback returning the currently active cards.  
+- `dropZones` — array of DropZone instances (or any object with `.type`, `.x`, `.y`).  
+- Call `helper.notifyDragStart()` when the player begins dragging to pause the hint.  
+- Call `helper.notifyCorrectMove()` after a correct drop to reset the AFK countdown.
+
+### `startLevelSelect(buttons)`
+Taps each button in sequence, looping endlessly. Pass the array of button objects.
+
+### `startFinalScreen(btnFin)`
+Taps the CTA button, hides, and repeats every few seconds.
+
+### `kill()`
+Destroys all timers, tweens, and the finger sprite. Call on scene shutdown.
+
+**Texture key:** The finger sprite uses the key `'finger'`. Add a texture with this key to the asset manifest to display it.
+
+---
+
+## Customisation guide
+
+### 1 — Add a new game object to a scene
+
+Open `src/Game.js` → `_initScene()` and construct your object there.  
+Use `this.mainContainer` as the parent so it scales with the viewport.
+
+```js
+// Example: add an image centred on screen
+const myImg = this.add.image(0, 0, 'myTexture');
+myImg.addProperties(['pos', 'scale']);
+myImg.px = 0; myImg.py = -100;   // portrait position
+myImg.lx = 0; myImg.ly = -80;    // landscape position
+myImg.pScaleX = 0.8; myImg.pScaleY = 0.8;
+myImg.lScaleX = 1.0; myImg.lScaleY = 1.0;
+this.mainContainer.add(myImg);
+```
+
+See `skills/new-game-object.skill.md` for the full pattern including alignment anchors.
+
+### 2 — Use the Button component
+
+```js
+import Button from "./Button";
+
+const btn = new Button({
+    scene:    this,
+    texture:  'myButtonTexture',  // texture key loaded in the asset manifest
+    text:     'Tap me',           // optional text overlay
+    px: 0, py: 200, lx: 0, ly: 150,
+    pScaleX: 0.5, pScaleY: 0.5,
+    lScaleX: 0.6, lScaleY: 0.6,
+    callback: () => console.log('clicked'),
+    container: this.mainContainer
+});
+```
+
+### 3 — End the scene programmatically
+
+Call `this._triggerEnd()` from anywhere inside `Game.js`.  
+`StateManager.markCompleted(sceneId)` is called automatically, then either the FinalWindow or TransitionScene is shown based on the remaining flow.
+
+### 4 — Add a new scene
+
+1. Add a new `game-settings_scene-N.json` override file.
+2. Add the scene id to the `flow` arrays in `config.js`.
+3. Add a label in `transition-screen-settings.json → sceneButtonLabels`.
+
+### 5 — Add assets
+
+Drop files into `assets/textures/`, `assets/audio/`, `assets/fonts/`, or `assets/spine/`.  
+Register them in the `versions` arrays inside `config.js`:
+
+```js
+'s1': {
+    flow: ['scene-1'],
+    audio:    ['sfx'],        // file stem under assets/audio/
+    fonts:    ['LilitaOne'],  // file stem under assets/fonts/
+    sheets:   ['atlas'],      // sprite-sheet stem under assets/sheets/
+    textures: ['bg_p', 'bg_l', 'btnFin', 'imgFin', 'finger']
+}
+```
+
+---
+
+## Build & preview
+
+```bash
+npm install           # first time
+npm run dev           # local preview — builds the version in config.js currentVersion
+npm run prod          # production build — all variants × all networks
+```
+
+Preview files are written to `dist_bckp/preview/`.  
+Production files are written per-network under `dist_bckp/<variant>/`.
+
+---
+
+## Level flow in config.js
+
+```js
+// String  → force this scene
+// Array   → player chooses one of these scenes (TransitionScene shown)
+// levelSelect: true → start with TransitionScene
+
+'versions': {
+    // Play scene-1, then player chooses between scene-2 and scene-3
+    's1-t(s2-s3)': {
+        flow: ['scene-1', ['scene-2', 'scene-3']],
+        audio: [], fonts: [], sheets: [], textures: []
+    }
+}
+```
+
+`StateManager` tracks completed scenes. `getNextScene()` returns the next forced scene. `getAvailableScenes()` returns the available choices at a choice stage. `isFlowComplete()` returns `true` when all stages are done.

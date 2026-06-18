@@ -1,0 +1,354 @@
+import Utils from "../core/framework/Utils";
+import SETTINGS from "../final-window-settings.json";
+
+/**
+ * FinalWindow
+ * -----------
+ * Full-screen end-state overlay containing:
+ *   • a translucent black backdrop
+ *   • imgFin  – win image near the top, bounces in then pulses continuously
+ *   • btnFin  – CTA button near the bottom, zooms in then twitches periodically
+ *
+ * Usage:
+ *   const fw = new FinalWindow({ scene, container, onCta: () => ctaClick() });
+ *   fw.setVisible(false);          // hidden at game start
+ *   fw.show();                     // call when the game ends
+ */
+export default class FinalWindow {
+    constructor({ scene, container, onCta }) {
+        this._scene     = scene;
+        this._container = container;
+        this._onCta     = onCta;
+
+        this._twitchTimer = null;
+        this._blurBg      = null;
+        this._blurTexKey  = null;
+
+        this._buildOverlay();
+        this._buildImgFin();
+        this._buildBtnFin();
+
+        this.setVisible(false);
+
+        const launchDelay = SETTINGS.autoShowOnLaunchMs;
+        if (typeof launchDelay === 'number' && launchDelay > 0) {
+            this._scene.time.delayedCall(launchDelay, () => {
+                if (!this._overlay.visible) {
+                    this.show();
+                }
+            });
+        }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Construction
+    // ─────────────────────────────────────────────────────────────────────────
+
+    _buildOverlay() {
+        const cfg = SETTINGS.overlay;
+
+        this._overlay = this._scene.add.graphics();
+        this._overlay.fillStyle(0x000000, cfg.fillAlpha);
+        this._overlay.fillRect(-3000, -3000, 6000, 6000);
+        this._overlay.setCustomPosition(0, 0);
+        this._overlay.setDepth(cfg.depth);
+        this._overlay.setAlpha(0);
+
+        this._container.add(this._overlay);
+    }
+
+    _buildImgFin() {
+        const cfg = SETTINGS.imgFin;
+
+        if (this._scene.textures.exists('imgFin')) {
+            this._imgFin = this._scene.add.image(0, 0, 'imgFin');
+        } else {
+            this._imgFin = this._scene.add.text(0, 0, 'WIN!', {
+                fontFamily: 'LilitaOne-Regular, Arial',
+                fontSize: '120px',
+                color: '#ffdd00',
+                stroke: '#000000',
+                strokeThickness: 8
+            }).setOrigin(0.5, 0.5);
+        }
+        this._imgFin.addProperties(['pos', 'scale']);
+        this._imgFin.setAlign('Top');
+        this._imgFin.px = cfg.portraitX;
+        this._imgFin.py = cfg.portraitY;
+        this._imgFin.lx = cfg.landscapeX;
+        this._imgFin.ly = cfg.landscapeY;
+        this._imgFin.pScaleX = 0;
+        this._imgFin.pScaleY = 0;
+        this._imgFin.lScaleX = 0;
+        this._imgFin.lScaleY = 0;
+        this._imgFin.setDepth(cfg.depth);
+        this._imgFin.setAlpha(0);
+
+        this._container.add(this._imgFin);
+    }
+
+    _buildBtnFin() {
+        const cfg = SETTINGS.btnFin;
+
+        if (this._scene.textures.exists('btnFin')) {
+            this._btnFin = this._scene.add.image(0, 0, 'btnFin');
+        } else {
+            this._btnFin = this._scene.add.text(0, 0, 'PLAY NOW!', {
+                fontFamily: 'LilitaOne-Regular, Arial',
+                fontSize: '72px',
+                color: '#ffffff',
+                stroke: '#000000',
+                strokeThickness: 6,
+                backgroundColor: 'rgba(20,120,20,0.9)',
+                padding: { x: 40, y: 20 }
+            }).setOrigin(0.5, 0.5);
+        }
+        this._btnFin.addProperties(['pos', 'scale']);
+        this._btnFin.setAlign('Bottom');
+        this._btnFin.px = cfg.portraitX;
+        this._btnFin.py = cfg.portraitY;
+        this._btnFin.lx = cfg.landscapeX;
+        this._btnFin.ly = cfg.landscapeY;
+        this._btnFin.pScaleX = 0;
+        this._btnFin.pScaleY = 0;
+        this._btnFin.lScaleX = 0;
+        this._btnFin.lScaleY = 0;
+        this._btnFin.setDepth(cfg.depth);
+        this._btnFin.setAlpha(0);
+        this._btnFin.setInteractive();
+        this._btnFin.on('pointerdown', () => {
+            Utils.addAudio(this._scene, 'click', 1.5);
+            this._handleCtaClick();
+        });
+
+        this._container.add(this._btnFin);
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Visibility
+    // ─────────────────────────────────────────────────────────────────────────
+
+    setVisible(visible) {
+        if (this._blurBg) this._blurBg.setVisible(visible);
+        this._overlay.setVisible(visible);
+        this._imgFin.setVisible(visible);
+        this._btnFin.setVisible(visible);
+    }
+
+    /** Expose the CTA button for external hint systems. */
+    get btnFin() { return this._btnFin; }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Show sequence
+    // ─────────────────────────────────────────────────────────────────────────
+
+    show() {
+        this._captureBlurredBackground(() => {
+            const maxDepth = this._container.list.reduce((max, child) => {
+                if (child === this._overlay || child === this._imgFin ||
+                    child === this._btnFin  || child === this._blurBg ||
+                    child.isHelperHint) return max;
+                return (typeof child.depth === 'number' && child.depth > max) ? child.depth : max;
+            }, -Infinity);
+
+            const blurDepth    = Number.isFinite(maxDepth) ? maxDepth + 1 : SETTINGS.overlay.depth - 1;
+            const overlayDepth = blurDepth + 1;
+            const contentDepth = overlayDepth + 1;
+
+            if (this._blurBg) this._blurBg.setDepth(blurDepth);
+            this._overlay.setDepth(overlayDepth);
+            this._imgFin.setDepth(contentDepth);
+            this._btnFin.setDepth(contentDepth);
+            if (typeof this._container.sort === 'function') {
+                this._container.sort('depth');
+            }
+
+            this.setVisible(true);
+            this._fadeInOverlay();
+            this._animateImgFin();
+            this._animateBtnFin();
+        });
+    }
+
+    /**
+     * Takes a snapshot of the current frame (while the final window is still
+     * hidden), renders it into an off-screen canvas with a CSS blur, then
+     * registers the result as a Phaser texture and adds it to the container.
+     * @param {function} onReady – called once the texture is ready (or on error)
+     */
+    _captureBlurredBackground(onReady) {
+        const blurRadius = SETTINGS.overlay.blurRadius ?? 12;
+
+        this._scene.game.renderer.snapshot((domImg) => {
+            try {
+                const W = domImg.width  || this._scene.scale.width;
+                const H = domImg.height || this._scene.scale.height;
+
+                // Render to an off-screen 2D canvas with CSS blur applied.
+                const offscreen = document.createElement('canvas');
+                offscreen.width  = W;
+                offscreen.height = H;
+                const ctx = offscreen.getContext('2d');
+                ctx.filter = `blur(${blurRadius}px)`;
+                ctx.drawImage(domImg, 0, 0);
+
+                // Register (or replace) as a Phaser texture.
+                const key = '__fw_blur_bg';
+                if (this._scene.textures.exists(key)) {
+                    this._scene.textures.remove(key);
+                    if (this._blurBg) { this._blurBg.destroy(); this._blurBg = null; }
+                }
+                this._scene.textures.addCanvas(key, offscreen);
+                this._blurTexKey = key;
+
+                // Size the image to fill the screen exactly in container-local space.
+                const s = this._scene.game.size.scale;
+                this._blurBg = this._scene.add.image(0, 0, key);
+                this._blurBg.setDisplaySize(W / s, H / s);
+                this._blurBg.setCustomPosition(0, 0); // aligns to screen center (same as overlay)
+                this._blurBg.setAlpha(0);
+                this._container.add(this._blurBg);
+            } catch (_e) {
+                // ctx.filter not supported – proceed without blur.
+            }
+            onReady();
+        });
+    }
+
+    _fadeInOverlay() {
+        const cfg = SETTINGS.overlay;
+        if (this._blurBg) {
+            this._scene.tweens.add({
+                targets:  this._blurBg,
+                alpha:    1,
+                duration: 400,
+                ease:     'Power2'
+            });
+        }
+        this._scene.tweens.add({
+            targets:  this._overlay,
+            alpha:    cfg.targetAlpha,
+            duration: 400,
+            ease:     'Power2'
+        });
+    }
+
+    _animateImgFin() {
+        const cfg  = SETTINGS.imgFin;
+        const anim = cfg.intro;
+
+        this._scene.tweens.add({
+            targets:  this._imgFin,
+            alpha:    1,
+            pScaleX:  cfg.pScale,
+            pScaleY:  cfg.pScale,
+            lScaleX:  cfg.lScale,
+            lScaleY:  cfg.lScale,
+            duration: anim.durationMs,
+            delay:    anim.delayMs,
+            ease:     anim.ease,
+            onComplete: () => this._startImgFinPulse()
+        });
+    }
+
+    _animateBtnFin() {
+        const cfg  = SETTINGS.btnFin;
+        const anim = cfg.intro;
+
+        this._scene.tweens.add({
+            targets:  this._btnFin,
+            alpha:    1,
+            pScaleX:  cfg.pScale,
+            pScaleY:  cfg.pScale,
+            lScaleX:  cfg.lScale,
+            lScaleY:  cfg.lScale,
+            duration: anim.durationMs,
+            delay:    anim.delayMs,
+            ease:     anim.ease,
+            onComplete: () => this._startBtnTwitch()
+        });
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Loops
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /** imgFin: smooth, continuous grow-and-shrink sine pulse. */
+    _startImgFinPulse() {
+        const cfg   = SETTINGS.imgFin;
+        const pulse = cfg.pulse;
+        const base  = cfg.pScale;
+        const peak  = base + pulse.scaleAdd;
+
+        this._imgFinLoop = this._scene.tweens.add({
+            targets:  this._imgFin,
+            pScaleX:  peak,
+            pScaleY:  peak,
+            lScaleX:  peak,
+            lScaleY:  peak,
+            duration: pulse.durationMs,
+            ease:     pulse.ease,
+            yoyo:     true,
+            repeat:   -1
+        });
+    }
+
+    /**
+     * btnFin: periodic twitch — quickly grows (Power2.In) then smoothly
+     * shrinks back (Sine.Out), pauses, then repeats indefinitely.
+     */
+    _startBtnTwitch() {
+        const cfg    = SETTINGS.btnFin;
+        const twitch = cfg.twitch;
+        const normal = cfg.pScale;
+        const large  = normal * twitch.scaleMultiplier;
+        const lNormal = cfg.lScale;
+        const lLarge  = lNormal * twitch.scaleMultiplier;
+
+        const doTwitch = () => {
+            this._scene.tweens.add({
+                targets:  this._btnFin,
+                pScaleX:  large,
+                pScaleY:  large,
+                lScaleX:  lLarge,
+                lScaleY:  lLarge,
+                duration: twitch.upMs,
+                ease:     'Power2.In',
+                onComplete: () => {
+                    this._scene.tweens.add({
+                        targets:  this._btnFin,
+                        pScaleX:  normal,
+                        pScaleY:  normal,
+                        lScaleX:  lNormal,
+                        lScaleY:  lNormal,
+                        duration: twitch.downMs,
+                        ease:     'Sine.Out',
+                        onComplete: () => {
+                            this._twitchTimer = this._scene.time.delayedCall(twitch.pauseMs, doTwitch);
+                        }
+                    });
+                }
+            });
+        };
+
+        this._twitchTimer = this._scene.time.delayedCall(twitch.pauseMs, doTwitch);
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // CTA
+    // ─────────────────────────────────────────────────────────────────────────
+
+    _handleCtaClick() {
+        if (this._twitchTimer) this._twitchTimer.remove();
+        if (this._imgFinLoop)  this._imgFinLoop.stop();
+        this._btnFin.off('pointerdown');
+
+        if (this._blurBg) { this._blurBg.destroy(); this._blurBg = null; }
+        if (this._blurTexKey && this._scene.textures.exists(this._blurTexKey)) {
+            this._scene.textures.remove(this._blurTexKey);
+            this._blurTexKey = null;
+        }
+
+        if (this._onCta) this._onCta();
+    }
+}
