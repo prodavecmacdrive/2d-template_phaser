@@ -1,6 +1,6 @@
 import Network from './Network.js'
 
-export default class Facebook extends Network {
+export default class Moloco extends Network {
     constructor(callback) {
         super(callback);
     }

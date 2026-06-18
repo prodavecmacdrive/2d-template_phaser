@@ -105,12 +105,22 @@ class BuilderPlugin {
      * an object keyed by 'scene-N'.  Missing files are silently skipped.
      */
     _readSceneSettings() {
+        // Derive scene ids from all flows in config.versions instead of hardcoding 1..3.
+        const sceneIds = new Set();
+        for (const vCfg of Object.values(config.versions)) {
+            if (!Array.isArray(vCfg.flow)) continue;
+            for (const stage of vCfg.flow) {
+                const ids = Array.isArray(stage) ? stage : [stage];
+                ids.forEach(id => sceneIds.add(id));
+            }
+        }
+
         const scenesData = {};
-        for (let i = 1; i <= 3; i++) {
-            const filePath = `game-settings_scene-${i}.json`;
+        for (const sceneId of sceneIds) {
+            const filePath = `game-settings_${sceneId}.json`;
             if (fs.existsSync(filePath)) {
                 try {
-                    scenesData[`scene-${i}`] = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+                    scenesData[sceneId] = JSON.parse(fs.readFileSync(filePath, 'utf8'));
                 } catch (e) {
                     console.warn(`[Builder] Could not parse ${filePath}:`, e.message);
                 }

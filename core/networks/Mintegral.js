@@ -1,6 +1,6 @@
 import Network from './Network.js'
 
-export default class UnityAds extends Network {
+export default class Mintegral extends Network {
     constructor(callback) {
         super(callback);
     }

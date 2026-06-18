@@ -81,13 +81,14 @@ class App extends Phaser.Game {
     }
 
     create() {
-        setTimeout('window.scrollTo(0, 1)', 10);
+        setTimeout(() => window.scrollTo(0, 1), 10);
 
         if(!window.dapi) window.addEventListener('resize', this.resize.bind(this), true);
 
         const networkName = getConfiguredNetworkName();
+        this._networkName = networkName;
 
-        this.network = network;
+        this.network = network || new Network();
         this.network.game = this;
         window.App.networkName = networkName;
         window.App.network = this.network;
@@ -161,7 +162,7 @@ class App extends Phaser.Game {
 
             deviceWidth = window.dapi.getScreenSize().width * window.devicePixelRatio;
             deviceHeight = window.dapi.getScreenSize().height * window.devicePixelRatio;
-        } else if (getConfiguredNetworkName() === 'Applovin') {
+        } else if (this._networkName === 'Applovin') {
             width = window.mraid.getScreenSize().width;
             height = window.mraid.getScreenSize().height;
 
@@ -177,8 +178,8 @@ class App extends Phaser.Game {
 
         this.scale.resize(deviceWidth, deviceHeight);
 
-        let scale = Math.min(deviceWidth / 600, deviceHeight / 900);
-        this.size.scale = scale.toFixed(1);
+        const scale = Math.min(deviceWidth / 600, deviceHeight / 900);
+        this.size.scale = +scale.toFixed(1);
         this.size.isPortrait = deviceWidth < deviceHeight;
         
         this.updateScale();
@@ -207,22 +208,25 @@ class App extends Phaser.Game {
     resizeObj(container) {
         for (let j = 0; j < container.list.length; j++) {
             const obj = container.list[j];
-            if( obj.customProps.includes('pos') ) {
+            if( obj.customProps && obj.customProps.includes('pos') ) {
                 this.size.isPortrait ? obj.setCustomPosition(obj.px, obj.py) : obj.setCustomPosition(obj.lx, obj.ly);
-            } else {
+            } else if (obj.cx !== undefined) {
                 obj.setCustomPosition(obj.cx, obj.cy);
             }
 
-            if( obj.customProps.includes('scale') ) this.size.isPortrait ? obj.setScale(obj.pScaleX, obj.pScaleY) : obj.setScale(obj.lScaleX, obj.lScaleY);
-            if( obj.customProps.includes('angle') ) this.size.isPortrait ? obj.setAngle(obj.pAngle) : obj.setAngle(obj.lAngle);
-            if( obj.customProps.includes('alpha') ) this.size.isPortrait ? obj.setAlpha(obj.pAlpha) : obj.setAlpha(obj.lAlpha);
-            if( obj.customProps.includes('visible') ) this.size.isPortrait ? obj.setVisible(obj.pVisible) : obj.setVisible(obj.lVisible);
-            if( obj.customProps.includes('align') ) this.size.isPortrait ? obj.setAlign(obj.pAlign) : obj.setAlign(obj.lAlign);
-            if( obj.customProps.includes('image') ) {
+            if( obj.customProps && obj.customProps.includes('scale') ) this.size.isPortrait ? obj.setScale(obj.pScaleX, obj.pScaleY) : obj.setScale(obj.lScaleX, obj.lScaleY);
+            if( obj.customProps && obj.customProps.includes('angle') ) this.size.isPortrait ? obj.setAngle(obj.pAngle) : obj.setAngle(obj.lAngle);
+            if( obj.customProps && obj.customProps.includes('alpha') ) this.size.isPortrait ? obj.setAlpha(obj.pAlpha) : obj.setAlpha(obj.lAlpha);
+            if( obj.customProps && obj.customProps.includes('visible') ) this.size.isPortrait ? obj.setVisible(obj.pVisible) : obj.setVisible(obj.lVisible);
+            if( obj.customProps && obj.customProps.includes('align') ) this.size.isPortrait ? obj.setAlign(obj.pAlign) : obj.setAlign(obj.lAlign);
+            if( obj.customProps && obj.customProps.includes('image') ) {
                 const img = this.size.isPortrait ? obj.pImage : obj.lImage;
                 (window.App.resources.textures[img] || img === "__MISSING" || img === "None") ?  obj.setTexture(img) : obj.setTexture('atlas', img);
             }
-            if( obj.customProps.includes('origin') ) this.size.isPortrait ? obj.setOrigin(obj.pOriginX, obj.pOriginY) : obj.setOrigin(obj.lOriginX, obj.lOriginY);
+            if( obj.customProps && obj.customProps.includes('origin') ) this.size.isPortrait ? obj.setOrigin(obj.pOriginX, obj.pOriginY) : obj.setOrigin(obj.lOriginX, obj.lOriginY);
+
+            // Recurse into nested containers
+            if (obj.list && obj.list.length > 0) this.resizeObj(obj);
         }
     }
 
@@ -244,14 +248,12 @@ class App extends Phaser.Game {
     }
 
     fixedAudioStop() {
-        let audioContext = this.sound.context;
-        setInterval(() => {
-            if (audioContext.state === 'suspended') {
-                this.sound.mute = true;
-            } else {
-                if(this.sound.mute) this.sound.mute = false;
-            }
-        }, 1);
+        const audioContext = this.sound.context;
+        const sync = () => {
+            this.sound.mute = audioContext.state === 'suspended';
+        };
+        audioContext.addEventListener('statechange', sync);
+        sync();
     }
 }
 

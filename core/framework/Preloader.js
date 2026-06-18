@@ -212,12 +212,6 @@ export default class Preloader extends Phaser.Scene {
             }
 
             const autoShowMs = 0;
-            console.log('[Preloader] autoShowOnLaunchMs test', {
-                isDev: window.App.isDev,
-                autoShowOnLaunchMs: autoShowMs,
-                willShowTransition: window.App.isDev && autoShowMs > 0
-            });
-
             if (window.App.isDev && autoShowMs > 0) {
                 this.time.delayedCall(autoShowMs, () => {
                     this.scene.start('TransitionScene');
